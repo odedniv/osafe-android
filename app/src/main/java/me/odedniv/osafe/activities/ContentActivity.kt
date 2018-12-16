@@ -137,6 +137,14 @@ class ContentActivity : BaseActivity(), GeneratePassphraseDialog.Listener {
                     REQUEST_ENCRYPTION
             )
             true
+        } R.id.action_manage_fingerprints -> {
+            startActivityForResult(
+                    Intent(this, ManageFingerprintsActivity::class.java)
+                            .putExtra(EXTRA_ENCRYPTION, encryption)
+                            .putExtra(EXTRA_STORAGE, storage.state),
+                    REQUEST_ENCRYPTION
+            )
+            true
         } else -> {
             super.onOptionsItemSelected(item)
         }

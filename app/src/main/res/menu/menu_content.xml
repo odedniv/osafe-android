@@ -6,4 +6,8 @@
         android:id="@+id/action_change_passphrase"
         android:title="@string/action_change_passphrase"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/action_manage_fingerprints"
+        android:title="@string/action_manage_fingerprints"
+        app:showAsAction="never" />
 </menu>

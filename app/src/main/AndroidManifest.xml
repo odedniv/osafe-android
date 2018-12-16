@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="me.odedniv.osafe">
 
+    <uses-permission
+        android:name="android.permission.USE_FINGERPRINT" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -11,8 +14,8 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".activities.ContentActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -26,6 +29,8 @@
         <activity
             android:name=".activities.ExistingPassphraseActivity"
             android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".activities.ManageFingerprintsActivity" />
 
         <service
             android:name=".services.EncryptionStorageService"

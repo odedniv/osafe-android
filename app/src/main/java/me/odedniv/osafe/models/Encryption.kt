@@ -10,25 +10,13 @@ import me.odedniv.osafe.models.encryption.Key
 import me.odedniv.osafe.models.encryption.Message
 import java.security.MessageDigest
 import java.util.concurrent.Callable
+import javax.crypto.Cipher
 
-class Encryption: Parcelable {
-    private var key: ByteArray? = null
+class Encryption(private val keyLabel: Key.Label, private var key: ByteArray): Parcelable {
     private var original: Message? = null
     private var baseKey: ByteArray? = null
 
-    private constructor(key: ByteArray) {
-        this.key = key
-    }
-
-    constructor(passphrase: String) {
-        setPassphrase(passphrase)
-    }
-
-    private fun setPassphrase(passphrase: String) {
-        key = MessageDigest
-                .getInstance("SHA-512")
-                .digest(passphrase.toByteArray(Charsets.UTF_8))
-    }
+    constructor(passphrase: String): this(Key.Label.PASSPHRASE, generateKey(passphrase))
 
     fun encrypt(content: String): Task<Message> {
         return Tasks.call(AsyncTask.THREAD_POOL_EXECUTOR, Callable {
@@ -40,7 +28,7 @@ class Encryption: Parcelable {
                         Key(
                                 label = Key.Label.PASSPHRASE,
                                 content = Content.encrypt(
-                                        key = key!!,
+                                        key = key,
                                         content = baseKey!!
                                 )
                         )
@@ -62,9 +50,9 @@ class Encryption: Parcelable {
         return Tasks.call(AsyncTask.THREAD_POOL_EXECUTOR, Callable {
             var keyIndex: Int? = null
             message.keys.withIndex().any {
-                if (it.value.label != Key.Label.PASSPHRASE) return@any false
+                if (it.value.label != keyLabel) return@any false
                 try {
-                    baseKey = it.value.content.decrypt(key!!)
+                    baseKey = it.value.content.decrypt(key)
                 } catch (e: Exception) {
                     return@any false
                 }
@@ -90,12 +78,12 @@ class Encryption: Parcelable {
         return check(message)
                 .onSuccessTask { keyIndex ->
                     Tasks.call(AsyncTask.THREAD_POOL_EXECUTOR, Callable {
-                        setPassphrase(passphrase)
+                        key = generateKey(passphrase)
                         val keys = message.keys.copyOf()
                         keys[keyIndex!!] = Key(
                                 label = Key.Label.PASSPHRASE,
                                 content = Content.encrypt(
-                                        key = key!!,
+                                        key = key,
                                         content = baseKey!!
                                 )
                         )
@@ -108,16 +96,49 @@ class Encryption: Parcelable {
                 }
     }
 
+    fun addKey(message: Message, label: Key.Label, cipher: Cipher): Task<Message> {
+        return check(message)
+                .onSuccessTask { _ ->
+                    Tasks.call(AsyncTask.THREAD_POOL_EXECUTOR, Callable {
+                        val keys = message.keys + Key(
+                                label = label,
+                                content = Content.encrypt(
+                                        cipher = cipher,
+                                        content = baseKey!!
+                                )
+                        )
+                        original = Message(
+                                keys = keys,
+                                content = message.content
+                        )
+                        original!!
+                    })
+                }
+    }
+
+    fun removeKey(message: Message, key: Key): Task<Message> {
+        val keys = message.keys.toMutableList()
+        keys.remove(key)
+        return Tasks.forResult(
+                Message(
+                        keys = keys.toTypedArray(),
+                        content = message.content
+                )
+        )
+    }
+
     /*
     Parcelable implementation
      */
 
     private constructor(parcel: Parcel) : this(
+            keyLabel = Key.Label.valueOf(parcel.readString()),
             key = readParcelByteArray(parcel)
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeInt(key!!.size)
+        parcel.writeString(keyLabel.toString())
+        parcel.writeInt(key.size)
         parcel.writeByteArray(key)
     }
 
@@ -126,6 +147,12 @@ class Encryption: Parcelable {
     }
 
     companion object CREATOR : Parcelable.Creator<Encryption> {
+        private fun generateKey(passphrase: String): ByteArray {
+            return MessageDigest
+                    .getInstance("SHA-512")
+                    .digest(passphrase.toByteArray(Charsets.UTF_8))
+        }
+
         override fun createFromParcel(parcel: Parcel): Encryption {
             return Encryption(parcel)
         }

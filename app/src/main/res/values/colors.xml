@@ -1,3 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="warning_color">#F44336</color>
+    <color name="hint_color">#000000</color>
+    <color name="success_color">#4CAF50</color>
+    <color name="highlight">#FFA500</color>
 </resources>
