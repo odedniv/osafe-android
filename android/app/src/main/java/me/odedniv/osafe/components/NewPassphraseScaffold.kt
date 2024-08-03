@@ -85,7 +85,7 @@ fun NewPassphraseScaffold(
         keyboardOptions =
           KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = { submit() }),
-        isError = passphrase.text != "" && repeat.text != "" && passphrase != repeat,
+        isError = passphrase.text != "" && repeat.text != "" && passphrase.text != repeat.text,
         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp).focusRequester(repeatFocus),
       )
       // Generate
@@ -98,7 +98,7 @@ fun NewPassphraseScaffold(
       // Submit
       Button(
         onClick = { submit() },
-        enabled = passphrase.text != "" && passphrase == repeat,
+        enabled = passphrase.text != "" && passphrase.text == repeat.text,
         modifier = Modifier.fillMaxWidth(),
       ) {
         Text("SUBMIT")
